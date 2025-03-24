@@ -11,6 +11,8 @@ import (
 )
 
 func main() {
+	var err error
+
 	tokenName := "DISCORD_BOT_TOKEN"
 
 	token, present := os.LookupEnv(tokenName)
@@ -20,12 +22,12 @@ func main() {
 
 	token = "Bot " + token
 
-	sess, err := discordgo.New(token)
+	session, err := discordgo.New(token)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	sess.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+	session.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if m.Author.ID == s.State.User.ID {
 			return
 		}
@@ -35,17 +37,20 @@ func main() {
 		}
 	})
 
-	sess.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
+	session.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 
-	err = sess.Open()
+	err = session.Open()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer sess.Close()
+	defer session.Close()
 
 	fmt.Println("Bot is online")
 
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-	<-sc
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	log.Println("Press Ctrl+C to exit")
+	<-stop
+
+	log.Println("Shutting down")
 }
